@@ -34,6 +34,15 @@
 
 
 /* Make no changes in this */  
+
+
+#define LeftMotorPin_F 
+#define LeftMotorPin_B 
+
+#define RightMotorPin_F 
+#define RightMotorPin_B 
+
+
 #define RECEIVING_PIN 
 #define MAGNET_ADD            0x1E
 
@@ -188,6 +197,58 @@ boolean isHexValid (){
   return true;
 }
 
+/*********************************************/
+
+/* functions to steer bot*/
+
+void stop(){
+
+  digitalWrite(LeftMotorPin_F,0);
+  digitalWrite(LeftMotorPin_B,0);
+
+  digitalWrite(RightMotorPin_F,0);
+  digitalWrite(RightMotorPin_B,0);  
+}
+
+void turnLeft(){
+
+  digitalWrite(LeftMotorPin_F,0);
+  digitalWrite(LeftMotorPin_B,0);
+
+  digitalWrite(RightMotorPin_F,1);
+  digitalWrite(RightMotorPin_B,0);
+}
+
+
+void turnRightAtZero(){
+
+  digitalWrite(LeftMotorPin_F,1);
+  digitalWrite(LeftMotorPin_B,0);
+
+  digitalWrite(RightMotorPin_F,0);
+  digitalWrite(RightMotorPin_B,0);
+}
+
+void turnLeftAtZero(){
+  
+  digitalWrite(LeftMotorPin_F,0);
+  digitalWrite(LeftMotorPin_B,1);
+
+  digitalWrite(RightMotorPin_F,1);
+  digitalWrite(RightMotorPin_B,0); 
+}
+
+
+void turnRight(){
+
+  digitalWrite(LeftMotorPin_F,1);
+  digitalWrite(LeftMotorPin_B,0);
+
+  digitalWrite(RightMotorPin_F,0);
+  digitalWrite(RightMotorPin_B,1);
+}
+
+
 /********************************************/
 
 
@@ -196,14 +257,14 @@ boolean isHexValid (){
 boolean readIRData(){
 
   detachExtInterrupt;
-  stopMotor;
+  stop();
 
   boolean flag_didnt_receive_any = true;
   boolean flag_message_started = false;
 
   if (readNextIRdata()){  /* -------------------------------------signal 400 start message*/
+    
     #if ROUND == ONE
-
       if (irReceivedByte == 400){  /*-----------------------------if is start message */
         if (readNextIRdata()){      /*----------------------------signal message_tag*/
           if (irReceivedByte == 11 || irReceivedByte == 22){  /*--if is message_tag at a non start poi
@@ -246,6 +307,11 @@ boolean readIRData(){
         }
       }
     #endif
+
+    #if ROUND == TWO
+
+
+    #endif
   }else {
   /* if receivedbyte is invalid  */
     return false;
@@ -253,7 +319,6 @@ boolean readIRData(){
 }
 
 /********************************************/
-
 
 
 void setup() {
@@ -268,6 +333,10 @@ void setup() {
   irReceiver.enableIRIn();
   pinMode(13,OUTPUT);
 
+  pinMode(LeftMotorPin_B,OUTPUT);
+  pinMode(LeftMotorPin_F,OUTPUT);
+  pinMode(RightMotorPin_B,OUTPUT);
+  pinMode(RightMotorPin_F,OUTPUT);
 
   /* Check the connection */  
   #if DEBUGGING
@@ -314,6 +383,8 @@ void setup() {
 }
 
 void loop(){
+
+
 
 
   #if DEBUGGING
