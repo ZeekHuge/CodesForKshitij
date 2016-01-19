@@ -19,9 +19,13 @@
 #define MAGNET                0
 #define IR                    1
 #define BOTH                  2
+#define ONE                   1
+#define TWO                   2
 
 
 /* Prameters to be changed */
+
+#define ROUND
 
 #define SHOULD_ENABLE_MAGNET
 #define SHOULD_ENABLE_IR
@@ -60,12 +64,14 @@ decode_results irResults;
 
 /* temprory variable */
 char char_temp;
-int int_temp;
-
 
 /* variables to store value data recieved from IR */
 int irReceivedByte;
+int headingAngle;
+char endPoi = -1;
 
+
+boolean reachedEnd;
 /* variables to store value of x and y magnetic declination */
 int x,y;
 
@@ -145,18 +151,45 @@ boolean readMagneticData(){
   return true;
 }
 
+
+boolean readNextIRdata(){
+
+  char i;
+  for (i=5; (!irReceiver.decode(&irResults)) && i; i-- ) {
+    delay(10);
+  }
+  if (i!=0){
+    irReceiver.resume(); // Receive the next value
+
+    if (isHexValid()){
+      return true;
+    }
+  }
+  return false;
+}
+
 /********************************************/
 
+/* check if the hex data is valid */
+boolean isHexValid (){
+  
+  irReceivedByte =  ((irResults.value & 0xf0000000) >> 5*4 );
+  irReceivedByte |= ((irResults.value & 0x0f000000) >> 3*4 );
+  irReceivedByte |= ((irResults.value & 0x0000f000) >> 3*4 );
+  irReceivedByte |= ((irResults.value & 0x00000f00) >> 1*4 ); 
 
-
-/* function to stop IR data reception */
-
-boolean stopReadingIRData(){
-
-  if (irReceiver.decode(&irResults)) {
-    //irReceiver.resume(); // commented out to stop the data reception
+  if (((int)(irReceivedByte + ((int)((irResults.value & 0x00f00000) >> 3*4 ) |
+                                    ((irResults.value & 0x000f0000) >> 1*4 ) |
+                                    ((irResults.value & 0x000000f0) >> 1*4 ) |
+                                    ((irResults.value & 0x0000000f) << 1*4 )))))
+  {
+    return false;
   }
+  return true;
 }
+
+/********************************************/
+
 
 /* function to read the output from the IR */
 
@@ -165,35 +198,57 @@ boolean readIRData(){
   detachExtInterrupt;
   stopMotor;
 
-  char flag = 0;
+  boolean flag_didnt_receive_any = true;
+  boolean flag_message_started = false;
 
-  if (irReceiver.decode(&irResults)) {
-    irReceiver.resume(); // Receive the next value
-  }
-   
+  if (readNextIRdata()){  /* -------------------------------------signal 400 start message*/
+    #if ROUND == ONE
 
-  if (irReceiver.decode(&irResults)) {
-    
-  /* check data validity */
-  irReceivedByte =  ((irResults.value & 0xf0000000) >> 5*4 );
-  irReceivedByte |= ((irResults.value & 0x0f000000) >> 3*4 );
-  irReceivedByte |= ((irResults.value & 0x0000f000) >> 3*4 );
-  irReceivedByte |= ((irResults.value & 0x00000f00) >> 1*4 );
+      if (irReceivedByte == 400){  /*-----------------------------if is start message */
+        if (readNextIRdata()){      /*----------------------------signal message_tag*/
+          if (irReceivedByte == 11 || irReceivedByte == 22){  /*--if is message_tag at a non start poi
+                                                                  or message 2 of start_poi */
 
-  int_temp =  ((irResults.value & 0x00f00000) >> 3*4 );
-  int_temp |= ((irResults.value & 0x000f0000) >> 1*4 );
-  int_temp |= ((irResults.value & 0x000000f0) >> 1*4 );
-  int_temp |= ((irResults.value & 0x0000000f) << 1*4 );
-
-  /* check valid  */
-
-  if (((int)(irReceivedByte + int_temp)) == 0){
-    /* if valid  */
-
-  }
-  
-  irReceiver.resume(); // Receive the next value
-
+            if (readNextIRdata()){    /*--------------------------signal poi id */
+              if (irReceivedByte == endPoi){ /*-------------------if is endPoi */
+                reachedEnd =true; /*------------------------------flag that it has reached end*/
+                return true;/*------------------------------------end this function*/
+              }
+              else{   /*------------------------------------------if is not endPoi*/
+                if(readNextIRdata()){ /*--------------------------signal next poi id*/
+                  if(readNextIRdata()){/*-------------------------signal next poi heading*/
+                    headingAngle = irReceivedByte;/*--------------save heading angle */
+                    if (readNextIRdata()){ /*---------------------signal next poi cost*/
+                      if (readNextIRdata()){/*--------------------signal stop byte */
+                        if(irReceivedByte == 500){ /*-------------if is stop byte*/
+                          return true;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }else if(irReceivedByte == 12){ /*-------------if message_tag at start, message 1 */
+            if (readNextIRdata()){ /*--------------------signal poi_id, must be 0 as is start_poi*/
+              if(readNextIRdata()){/*--------------------signal end poi_id */
+                endPoi = irReceivedByte; /*--------------save end poi_id*/
+                if (readNextIRdata()) /*-----------------signal stop message */
+                {
+                  if (irReceivedByte == 500) /*-----------if is stop message */
+                  {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    #endif
+  }else {
+  /* if receivedbyte is invalid  */
+    return false;
   }
 }
 
