@@ -249,6 +249,15 @@ void turnRight(){
 }
 
 
+void moveStraight(){
+
+  digitalWrite(LeftMotorPin_F,1);
+  digitalWrite(LeftMotorPin_B,0);
+
+  digitalWrite(RightMotorPin_F,1);
+  digitalWrite(RightMotorPin_B,0); 
+}
+
 /********************************************/
 
 
