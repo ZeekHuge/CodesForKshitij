@@ -1,7 +1,9 @@
 
 /**
 *
-*  The program do not reads or cares abour the z magnetic declination 
+--  The program do not reads or cares abour the z magnetic declination as its not required.
+--  The program assumes the x axis of the magentometer is the forward direction of the bot.
+*
 *  Pin connection is as :
 *
 *  Arduino :   Connection
@@ -21,7 +23,7 @@
 #define BOTH                  2
 #define ONE                   1
 #define TWO                   2
-
+#define DEGREES_TO_RADIANS_CONVERSION_FACTOR 
 
 /* Prameters to be changed */
 
@@ -35,6 +37,7 @@
 
 /* Make no changes in this */  
 
+#define SWITCH_PIN
 
 #define LeftMotorPin_F 
 #define LeftMotorPin_B 
@@ -53,14 +56,17 @@
 #endif
 
 #if DEBUGGING == MAGNET
+  
   #define ENABLE_MAGNET 1
 #endif
 
 #if DEBUGGING == IR
+ 
   #define ENABLE_IR 1
 #endif
   
 #if DEBUGGING == BOTH
+ 
   #define ENABLE_MAGNET 1
   #define ENABLE_IR 1
 #endif
@@ -78,126 +84,16 @@ char char_temp;
 int irReceivedByte;
 int headingAngle;
 char endPoi = -1;
-
+double headingValue;
 
 boolean reachedEnd;
+volatile boolean flag_readingData=false ;
+
 /* variables to store value of x and y magnetic declination */
 int x,y;
 
-/* function to write a single 8bit register */
-
-void writeSingleRegister (int reg, char value){
-
-  Wire.beginTransmission(MAGNET_ADD);
-  Wire.write(reg);  
-  Wire.write(value);
-  Wire.endTransmission();
-}
-
-/********************************************/
 
 
-/* function to read a single 8bit register */
-
-char readSingleRegister(int reg){
-
-  Wire.beginTransmission(MAGNET_ADD);
-  Wire.write(reg);  
-  Wire.endTransmission();
-  Wire.requestFrom(MAGNET_ADD,1);
-  char_temp = Wire.read();
-  Wire.endTransmission();
-
-  return char_temp;  
-}
-
-/********************************************/
-
-
-/* function to read x and y magnetic declinations */
-
-boolean readMagneticData(){
-
-  /* Reading x value */
-  Wire.beginTransmission(MAGNET_ADD);
-  Wire.write(0x03);  
-  Wire.endTransmission();
-  Wire.requestFrom(MAGNET_ADD,2);
-  x = Wire.read();
-  x = x << 8;
-  x = (x | Wire.read());
-  Wire.endTransmission();
-
-  /* converting from two's complement" */
-  x =~x;
-  x+=1;
-  
-  
-  /* Reading z value */
-  Wire.beginTransmission(MAGNET_ADD);
-  Wire.write(0x05);  
-  Wire.endTransmission();
-  Wire.requestFrom(MAGNET_ADD,2);
-  Wire.read();
-  Wire.read();
-  Wire.endTransmission();
-  
-  
-  /* Reading y value */
-  Wire.beginTransmission(MAGNET_ADD);
-  Wire.write(0x07);  
-  Wire.endTransmission();
-  Wire.requestFrom(MAGNET_ADD,2);
-  y = Wire.read();
-  y = y << 8;
-  y = (y | Wire.read());
-  Wire.endTransmission();
-
-  /* converting from two's complement" */
-  y =~y;
-  y+=1;
-
-  return true;
-}
-
-
-boolean readNextIRdata(){
-
-  char i;
-  for (i=5; (!irReceiver.decode(&irResults)) && i; i-- ) {
-    delay(10);
-  }
-  if (i!=0){
-    irReceiver.resume(); // Receive the next value
-
-    if (isHexValid()){
-      return true;
-    }
-  }
-  return false;
-}
-
-/********************************************/
-
-/* check if the hex data is valid */
-boolean isHexValid (){
-  
-  irReceivedByte =  ((irResults.value & 0xf0000000) >> 5*4 );
-  irReceivedByte |= ((irResults.value & 0x0f000000) >> 3*4 );
-  irReceivedByte |= ((irResults.value & 0x0000f000) >> 3*4 );
-  irReceivedByte |= ((irResults.value & 0x00000f00) >> 1*4 ); 
-
-  if (((int)(irReceivedByte + ((int)((irResults.value & 0x00f00000) >> 3*4 ) |
-                                    ((irResults.value & 0x000f0000) >> 1*4 ) |
-                                    ((irResults.value & 0x000000f0) >> 1*4 ) |
-                                    ((irResults.value & 0x0000000f) << 1*4 )))))
-  {
-    return false;
-  }
-  return true;
-}
-
-/*********************************************/
 
 /* functions to steer bot*/
 
@@ -258,15 +154,135 @@ void moveStraight(){
   digitalWrite(RightMotorPin_B,0); 
 }
 
-/********************************************/
+/*****************************************************************/
+
+
+/* function to write a single 8bit register from the magnetometer */
+
+void writeSingleRegister (int reg, char value){
+
+  Wire.beginTransmission(MAGNET_ADD);
+  Wire.write(reg);  
+  Wire.write(value);
+  Wire.endTransmission();
+}
+
+/*****************************************************************/
+
+
+/* function to read a single 8bit register from the magnetometer */
+
+char readSingleRegister(int reg){
+
+  Wire.beginTransmission(MAGNET_ADD);
+  Wire.write(reg);  
+  Wire.endTransmission();
+  Wire.requestFrom(MAGNET_ADD,1);
+  char_temp = Wire.read();
+  Wire.endTransmission();
+
+  return char_temp;  
+}
+
+/*****************************************************************/
+
+
+/* function to read x and y magnetic declinations */
+
+boolean readMagneticData(){
+
+  /* Reading x value */
+  Wire.beginTransmission(MAGNET_ADD);
+  Wire.write(0x03);  
+  Wire.endTransmission();
+  Wire.requestFrom(MAGNET_ADD,2);
+  x = Wire.read();
+  x = x << 8;
+  x = (x | Wire.read());
+  Wire.endTransmission();
+
+  /* converting from two's complement" */
+  x =~x;
+  x+=1;
+  
+  
+  /* Reading z value */
+  Wire.beginTransmission(MAGNET_ADD);
+  Wire.write(0x05);  
+  Wire.endTransmission();
+  Wire.requestFrom(MAGNET_ADD,2);
+  Wire.read();
+  Wire.read();
+  Wire.endTransmission();
+  
+  
+  /* Reading y value */
+  Wire.beginTransmission(MAGNET_ADD);
+  Wire.write(0x07);  
+  Wire.endTransmission();
+  Wire.requestFrom(MAGNET_ADD,2);
+  y = Wire.read();
+  y = y << 8;
+  y = (y | Wire.read());
+  Wire.endTransmission();
+
+  /* converting from two's complement" */
+  y =~y;
+  y+=1;
+
+  return true;
+}
+
+/*****************************************************************/
+
+/* check if the hex data (ie IR Received data) is valid */
+
+boolean isHexValid (){
+  
+  irReceivedByte =  ((irResults.value & 0xf0000000) >> 5*4 );
+  irReceivedByte |= ((irResults.value & 0x0f000000) >> 3*4 );
+  irReceivedByte |= ((irResults.value & 0x0000f000) >> 3*4 );
+  irReceivedByte |= ((irResults.value & 0x00000f00) >> 1*4 ); 
+
+  if (((int)(irReceivedByte + ((int)((irResults.value & 0x00f00000) >> 3*4 ) |
+                                    ((irResults.value & 0x000f0000) >> 1*4 ) |
+                                    ((irResults.value & 0x000000f0) >> 1*4 ) |
+                                    ((irResults.value & 0x0000000f) << 1*4 )))))
+  {
+    return false;
+  }
+  return true;
+}
+
+/*****************************************************************/
+
+/* function to read the next IR message */
+
+boolean readNextIRdata(){
+
+  char i;
+  for (i=5; (!irReceiver.decode(&irResults)) && i; i-- ) {
+    delay(10);
+  }
+  if (i!=0){
+    irReceiver.resume(); // Receive the next value
+
+    if (isHexValid()){
+      return true;
+    }
+  }
+  return false;
+}
+
+/*****************************************************************/
+
 
 
 /* function to read the output from the IR */
 
 boolean readIRData(){
 
-  detachExtInterrupt;
-  stop();
+  
 
   boolean flag_didnt_receive_any = true;
   boolean flag_message_started = false;
@@ -327,7 +343,15 @@ boolean readIRData(){
   }
 }
 
-/********************************************/
+/*****************************************************************/
+
+/* Function to change readingData flag using interrupt */
+void changeReadingDataFlag(){
+  flag_readingData=true;
+  detachInterrupt(RECEIVING_PIN);
+}
+
+/*****************************************************************/
 
 
 void setup() {
@@ -340,8 +364,10 @@ void setup() {
   /* Enabling I2C and IR receiver */   
   Wire.begin();
   irReceiver.enableIRIn();
-  pinMode(13,OUTPUT);
 
+  /* Setting GPIO modes */
+  pinMode(13,OUTPUT);
+  pinMode(SWITCH_PIN,INPUT);
   pinMode(LeftMotorPin_B,OUTPUT);
   pinMode(LeftMotorPin_F,OUTPUT);
   pinMode(RightMotorPin_B,OUTPUT);
@@ -374,7 +400,6 @@ void setup() {
   #endif
 
 
-
   /* Setting the value of the Mode register (0x02)=0x00 */
   writeSingleRegister(0x02,0x00);
 
@@ -389,9 +414,55 @@ void setup() {
   #if DEBUGGING
     Serial.println("The vaules printed will be as x y");
   #endif
+
+  /*to show that the bot is ready*/
+  digitalWrite(13,1);
+
+  while(digitalRead(SWITCH_PIN) != HIGH);
+  attachInterrupt(RECEIVING_PIN,changeReadingDataFlag,LOW);
 }
 
 void loop(){
+
+  if(flag_readingData) {
+    /* if reading the data, then stop the bot */
+    stop();
+
+    if (readIRData()){
+
+      /* if the data has been CORRECTLY read */
+      /* convert the heading angle to the the magnetic declinations */
+
+      headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+    }else{
+
+      /* if the data has been INcorrectly read */
+      /* move the bot a bit forward */
+
+      moveStraight();
+      delay(500);
+      stop();
+      
+      /*
+      ** Imagine the case in which the bot gets IR signal but since it is still far from
+      ** the poi, it is not getting correct signals. So the solution to this thing 
+      ** is that the bot should move ahead a bit more and then again start the procedure
+      ** The above three lines cause this same thing to happen
+      ** but remember, try the code in the file moveStraightDelayCheck in this same folder
+      ** and see what delay seems to make it move a bit ahead.
+      ** and replace that delay value with 500 in the above delay.
+      */
+    }
+
+    /* after reading data attach interrupt back to the reciving pin and clear the 
+    ** reading data flag */
+    flag_readingData = false;
+    attachInterrupt(RECEIVING_PIN,changeReadingDataFlag,LOW);  
+  }else if (!reachedEnd){
+
+    
+  }
+  
 
 
 
