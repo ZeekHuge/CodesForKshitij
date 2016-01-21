@@ -1,7 +1,7 @@
 
 /**
 *
---  The program do not reads or cares abour the z magnetic declination as its not required.
+--  The program do not reads or cares about the z magnetic declination as its not required.
 --  The program assumes the x axis of the magentometer is the forward direction of the bot.
 *
 *  Pin connection is as :
