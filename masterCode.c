@@ -17,6 +17,16 @@
 #include <IRremote.h>
 
 
+/*********************************/
+/*********************************/
+
+#define MAGNET_ALINGMENT 
+
+
+/*********************************/
+/*********************************/
+
+
 #define NO                   -1
 #define MAGNET                0
 #define IR                    1
@@ -346,12 +356,127 @@ boolean readIRData(){
 /*****************************************************************/
 
 /* Function to change readingData flag using interrupt */
+
 void changeReadingDataFlag(){
   flag_readingData=true;
   detachInterrupt(RECEIVING_PIN);
 }
 
 /*****************************************************************/
+
+
+/* Function to change the orientation of the bot according to the angle provided */
+
+void changeOrientetion (){
+
+  if (headingAngle >= 0 && headingAngle < 90 ){
+
+    /* These headingAngle would mean somewhere between N and E */    
+    
+    /* Aling bot somewhere in between N and W */
+    
+    readMagneticData();
+    while(x < 0 || y > 0 ){
+      turnRightAtZero();
+      readMagneticData();
+    }
+    stop();
+
+
+    /* Aling according to the headingValue */
+    headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+    readMagneticData();
+     while(y/x != headingValue ){
+       turnLeftAtZero();
+     }
+    stop();
+  }else if (headingAngle >= 90 && headingAngle < 180 ){
+  
+  /* These headingAngle would mean somewhere between E and S */    
+    
+  /* Aling bot somewhere in between E and N */
+
+    readMagneticData();
+    while(x < 0 || y < 0 ){
+      turnRightAtZero();
+      readMagneticData();
+    }
+    stop();
+
+    /* Aling according to the headingValue */
+    
+    if (headingAngle =! 90){
+      headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+      readMagneticData();
+      while(y/x != headingValue ){
+       turnLeftAtZero();
+      }
+      stop();
+    }else{
+      readMagneticData();
+      while( x != 0 ){
+        turnRightAtZero();
+        readMagneticData();
+      }
+      stop();      
+    }
+
+  }else if (headingAngle >= 180 && headingAngle < 270 ){
+
+    /* These headingAngle would mean somewhere between S and W */    
+    
+    /* Aling bot somewhere in between S and E */
+    
+    readMagneticData();
+    while(x > 0 || y < 0 ){
+      turnRightAtZero();
+      readMagneticData();
+    }
+    stop();
+
+
+    /* Aling according to the headingValue */
+    headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+    readMagneticData();
+     while(y/x != headingValue ){
+       turnLeftAtZero();
+     }
+    stop();
+  }else if (headingAngle >= 270 && headingAngle < 360 ){
+  
+  /* These headingAngle would mean somewhere between W and N */    
+    
+  /* Aling bot somewhere in between W and S */
+
+    readMagneticData();
+    while(x > 0 || y > 0 ){
+      turnRightAtZero();
+      readMagneticData();
+    }
+    stop();
+
+    /* Aling according to the headingValue */
+
+    if (headingAngle =! 270){
+      headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+      readMagneticData();
+      while(y/x != headingValue ){
+       turnLeftAtZero();
+      }
+      stop();
+    }else{
+      readMagneticData();
+      while( y != 0 ){
+        turnRightAtZero();
+        readMagneticData();
+      }
+      stop();      
+    }
+
+  }
+
+
+}
 
 
 void setup() {
@@ -422,6 +547,8 @@ void setup() {
   attachInterrupt(RECEIVING_PIN,changeReadingDataFlag,LOW);
 }
 
+
+
 void loop(){
 
   if(flag_readingData) {
@@ -433,7 +560,7 @@ void loop(){
       /* if the data has been CORRECTLY read */
       /* convert the heading angle to the the magnetic declinations */
 
-      headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
+
     }else{
 
       /* if the data has been INcorrectly read */
