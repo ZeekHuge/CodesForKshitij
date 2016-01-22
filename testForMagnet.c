@@ -511,7 +511,10 @@ void setup() {
 
   /* Setting GPIO modes */
   pinMode(13,OUTPUT);
-  pinMode(SWITCH_PIN,INPUT);
+  
+  DDRB &= ~(1<<3);
+  PORTB = (1<<3);
+
   pinMode(LeftMotorPin_B,OUTPUT);
   pinMode(LeftMotorPin_F,OUTPUT);
   pinMode(RightMotorPin_B,OUTPUT);
@@ -619,12 +622,12 @@ void loop(){
      Serial.print (x,HEX);
      Serial.print (" ");
      Serial.println (y,HEX);
-     if (x>0){
-      if (y<5 && y>-5){
+     if(x>0){
+      if(y<5 && y>-5){
         Serial.println("+x axis");
       }
-     } else if (y>0){
-      if (x<5 && x>-5){
+     }if(y>0){
+      if(x<5 && x>-5){
         Serial.println("+y axis");
       }
      }
