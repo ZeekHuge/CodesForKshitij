@@ -35,13 +35,13 @@
 /*********************************/
 /*********************************/
 
-#define MAGNET_ALINGMENT 
+#define MAGNET_ALINGMENT 1
 
 
 /*********************************/
 /*********************************/
 
-#define TEMP_RATE
+#define TEMP_RATE 1
 
 
 #define NO                   -1
@@ -54,12 +54,12 @@
 
 /* Prameters to be changed */
 
-#define ROUND
+#define ROUND ONE
 
-#define SHOULD_ENABLE_MAGNET
-#define SHOULD_ENABLE_IR
+#define SHOULD_ENABLE_MAGNET 1
+#define SHOULD_ENABLE_IR 1
 
-#define DEBUGGING
+#define DEBUGGING 0
 
 
 /* Make no changes in this */  
