@@ -562,7 +562,7 @@ void setup() {
   /*to show that the bot is ready*/
   digitalWrite(13,1);
   Serial.println("Tell the above output to Zubeen");
-  while(digitalRead(SWITCH_PIN) != HIGH);
+  while(digitalRead(SWITCH_PIN) != LOW);
   // attachInterrupt(RECEIVING_PIN,changeReadingDataFlag,LOW);
 }
 
