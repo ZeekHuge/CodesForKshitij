@@ -619,6 +619,14 @@ void loop(){
      Serial.print (x,HEX);
      Serial.print (" ");
      Serial.println (y,HEX);
+     if (x>0){
+      if (y<5 && y>-5){
+        Serial.println("+x axis");
+     }
+     else if (y>0){
+      if (x<5 && x>-5){
+        Serial.println("+y axis");
+     }
    // }else{
      // Serial.println("Data was not ready");
    // }
