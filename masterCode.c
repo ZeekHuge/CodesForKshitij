@@ -26,6 +26,8 @@
 /*********************************/
 /*********************************/
 
+#define TEMP_RATE
+
 
 #define NO                   -1
 #define MAGNET                0
@@ -33,7 +35,7 @@
 #define BOTH                  2
 #define ONE                   1
 #define TWO                   2
-#define DEGREES_TO_RADIANS_CONVERSION_FACTOR 
+#define DEGREES_TO_RADIANS_CONVERSION_FACTOR 0.017
 
 /* Prameters to be changed */
 
@@ -47,16 +49,22 @@
 
 /* Make no changes in this */  
 
-#define SWITCH_PIN
+#define DIRECTION_ZERO_LEFT   0
+#define DIRECTION_ZERO_RIGHT  1
+#define DIRECTION_STRAIGHT    2
+#define DIRECTION_RIGHT       3
+#define DIRECTION_LEFT        4
 
-#define LeftMotorPin_F 
-#define LeftMotorPin_B 
+#define SWITCH_PIN 11
 
-#define RightMotorPin_F 
-#define RightMotorPin_B 
+#define LeftMotorPin_F 8
+#define LeftMotorPin_B 9
+
+#define RightMotorPin_F 7
+#define RightMotorPin_B 6
 
 
-#define RECEIVING_PIN 
+#define RECEIVING_PIN         3
 #define MAGNET_ADD            0x1E
 
 
@@ -89,6 +97,7 @@ decode_results irResults;
 
 /* temprory variable */
 char char_temp;
+volatile char movingDirection;
 
 /* variables to store value data recieved from IR */
 int irReceivedByte;
@@ -109,59 +118,131 @@ int x,y;
 
 void stop(){
 
-  digitalWrite(LeftMotorPin_F,0);
-  digitalWrite(LeftMotorPin_B,0);
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
 
-  digitalWrite(RightMotorPin_F,0);
-  digitalWrite(RightMotorPin_B,0);  
+  PORTB &= ~(1<<0);
+  PORTB &= ~(1<<1);
+
+  PORTD &= ~(1<<7);
+  PORTD &= ~(1<<6);
+
+  // digitalWrite(LeftMotorPin_F,0);
+  // digitalWrite(LeftMotorPin_B,0);
+
+  // digitalWrite(RightMotorPin_F,0);
+  // digitalWrite(RightMotorPin_B,0);  
 }
 
-void turnLeft(){
+void turnLeft(unsigned int rate){
 
-  digitalWrite(LeftMotorPin_F,0);
-  digitalWrite(LeftMotorPin_B,0);
-
-  digitalWrite(RightMotorPin_F,1);
-  digitalWrite(RightMotorPin_B,0);
-}
-
-
-void turnRightAtZero(){
-
-  digitalWrite(LeftMotorPin_F,1);
-  digitalWrite(LeftMotorPin_B,0);
-
-  digitalWrite(RightMotorPin_F,0);
-  digitalWrite(RightMotorPin_B,0);
-}
-
-void turnLeftAtZero(){
+  movingDirection = DIRECTION_LEFT;
   
-  digitalWrite(LeftMotorPin_F,0);
-  digitalWrite(LeftMotorPin_B,1);
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
+  OCR2 = rate;
 
-  digitalWrite(RightMotorPin_F,1);
-  digitalWrite(RightMotorPin_B,0); 
+  PORTB |= (1<<0);
+  PORTB &= ~(1<<1);
+
+  PORTD |= (1<<7);
+  PORTD &= ~(1<<6);
+
+  TCCR2 |= (1<<0);
+
+  // digitalWrite(LeftMotorPin_F,0);
+  // digitalWrite(LeftMotorPin_B,0);
+
+  // digitalWrite(RightMotorPin_F,1);
+  // digitalWrite(RightMotorPin_B,0);
 }
 
 
-void turnRight(){
+void turnRightAtZero(unsigned int rate){
 
-  digitalWrite(LeftMotorPin_F,1);
-  digitalWrite(LeftMotorPin_B,0);
+  movingDirection = DIRECTION_ZERO_RIGHT;
 
-  digitalWrite(RightMotorPin_F,0);
-  digitalWrite(RightMotorPin_B,1);
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
+  OCR2 = rate;
+
+  PORTB |= (1<<0);
+  PORTB &= ~(1<<1);
+
+  PORTD |= (1<<6);
+  PORTD &= ~(1<<7);
+
+  TCCR2 |= (1<<0);
+
+  // digitalWrite(LeftMotorPin_F,1);
+  // digitalWrite(LeftMotorPin_B,0);
+
+  // digitalWrite(RightMotorPin_F,0);
+  // digitalWrite(RightMotorPin_B,1);
+}
+
+void turnLeftAtZero(unsigned int rate){
+  
+  movingDirection = DIRECTION_ZERO_LEFT;
+
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
+  OCR2 = rate;
+
+  PORTB |= (1<<1);
+  PORTB &= ~(1<<0);
+
+  PORTD |= (1<<7);
+  PORTD &= ~(1<<6);
+
+  TCCR2 |= (1<<0);
+
+  // digitalWrite(LeftMotorPin_F,0);
+  // digitalWrite(LeftMotorPin_B,1);
+
+  // digitalWrite(RightMotorPin_F,1);
+  // digitalWrite(RightMotorPin_B,0); 
 }
 
 
-void moveStraight(){
+void turnRight(unsigned int rate){
 
-  digitalWrite(LeftMotorPin_F,1);
-  digitalWrite(LeftMotorPin_B,0);
+  movingDirection = DIRECTION_RIGHT;
 
-  digitalWrite(RightMotorPin_F,1);
-  digitalWrite(RightMotorPin_B,0); 
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
+  OCR2 = rate;
+
+  PORTB |= (1<<0);
+  PORTB &= ~(1<<1);
+
+  PORTD |= (1<<7);
+  PORTD &= ~(1<<6);
+
+  TCCR2 |= (1<<0);
+
+  // digitalWrite(LeftMotorPin_F,1);
+  // digitalWrite(LeftMotorPin_B,0);
+
+  // digitalWrite(RightMotorPin_F,0);
+  // digitalWrite(RightMotorPin_B,1);
+}
+
+
+void moveStraight(unsigned int rate){
+
+  movingDirection = DIRECTION_STRAIGHT;
+  
+  TCCR2 &= ~(1<<0);  
+  TCNT2 = 0x0000;
+
+
+  PORTB |= (1<<0);
+  PORTB &= ~(1<<1);
+
+  PORTD |= (1<<7);
+  PORTD &= ~(1<<6);
+
 }
 
 /*****************************************************************/
@@ -377,7 +458,7 @@ void changeOrientetion (){
     
     readMagneticData();
     while(x < 0 || y > 0 ){
-      turnRightAtZero();
+      turnRightAtZero(TEMP_RATE);
       readMagneticData();
     }
     stop();
@@ -386,9 +467,9 @@ void changeOrientetion (){
     /* Aling according to the headingValue */
     headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
     readMagneticData();
-     while(y/x != headingValue ){
-       turnLeftAtZero();
-     }
+    while(y/x != headingValue ){
+      turnLeftAtZero(TEMP_RATE);
+    }
     stop();
   }else if (headingAngle >= 90 && headingAngle < 180 ){
   
@@ -398,7 +479,7 @@ void changeOrientetion (){
 
     readMagneticData();
     while(x < 0 || y < 0 ){
-      turnRightAtZero();
+      turnRightAtZero(TEMP_RATE);
       readMagneticData();
     }
     stop();
@@ -409,13 +490,13 @@ void changeOrientetion (){
       headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
       readMagneticData();
       while(y/x != headingValue ){
-       turnLeftAtZero();
+       turnLeftAtZero(TEMP_RATE);
       }
       stop();
     }else{
       readMagneticData();
       while( x != 0 ){
-        turnRightAtZero();
+        turnRightAtZero(TEMP_RATE);
         readMagneticData();
       }
       stop();      
@@ -429,7 +510,7 @@ void changeOrientetion (){
     
     readMagneticData();
     while(x > 0 || y < 0 ){
-      turnRightAtZero();
+      turnRightAtZero(TEMP_RATE);
       readMagneticData();
     }
     stop();
@@ -438,9 +519,9 @@ void changeOrientetion (){
     /* Aling according to the headingValue */
     headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
     readMagneticData();
-     while(y/x != headingValue ){
-       turnLeftAtZero();
-     }
+    while(y/x != headingValue ){
+      turnLeftAtZero(TEMP_RATE);
+    }
     stop();
   }else if (headingAngle >= 270 && headingAngle < 360 ){
   
@@ -450,7 +531,7 @@ void changeOrientetion (){
 
     readMagneticData();
     while(x > 0 || y > 0 ){
-      turnRightAtZero();
+      turnRightAtZero(TEMP_RATE);
       readMagneticData();
     }
     stop();
@@ -461,13 +542,13 @@ void changeOrientetion (){
       headingValue = tan(headingAngle * DEGREES_TO_RADIANS_CONVERSION_FACTOR);
       readMagneticData();
       while(y/x != headingValue ){
-       turnLeftAtZero();
+       turnLeftAtZero(TEMP_RATE);
       }
       stop();
     }else{
       readMagneticData();
       while( y != 0 ){
-        turnRightAtZero();
+        turnRightAtZero(TEMP_RATE);
         readMagneticData();
       }
       stop();      
@@ -481,6 +562,9 @@ void changeOrientetion (){
 
 void setup() {
   
+  TCCR2 = (1<<6);
+  TIMSK = (1<<7);
+
   #if DEBUGGING
   Serial.begin(9600);
   #endif
@@ -566,13 +650,13 @@ void loop(){
       /* if the data has been INcorrectly read */
       /* move the bot a bit forward */
 
-      moveStraight();
+      moveStraight(TEMP_RATE);
       delay(500);
       stop();
       
       /*
       ** Imagine the case in which the bot gets IR signal but since it is still far from
-      ** the poi, it is not getting correct signals. So the solution to this thing 
+      ** the poi, it is not getting correct signals. So the solution to this situation
       ** is that the bot should move ahead a bit more and then again start the procedure
       ** The above three lines cause this same thing to happen
       ** but remember, try the code in the file moveStraightDelayCheck in this same folder
@@ -611,3 +695,35 @@ void loop(){
    }
   #endif   
 }
+
+
+
+ISR(TIMER2_COMP_vect){
+
+  switch(movingDirection){
+    case DIRECTION_STRAIGHT:
+      PORTB ^= (1<<0);
+      PORTD ^= (1<<7);
+    break;
+
+    case DIRECTION_RIGHT:
+      PORTD ^= (1<<7);
+    break;
+
+    case DIRECTION_LEFT:
+      PORTB ^= (1<<0);
+    break;
+
+    case DIRECTION_ZERO_LEFT:
+      PORTB ^= (1<<1);
+      PORTD ^= (1<<7);
+    break;
+
+    case DIRECTION_ZERO_RIGHT:
+      PORTB ^= (1<<0);
+      PORTD ^= (1<<6);
+    break;
+  }
+
+}
+
