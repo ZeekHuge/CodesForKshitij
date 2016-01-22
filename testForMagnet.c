@@ -18,6 +18,7 @@
 *
 */
 
+
 /**
 *
 --  The program do not reads or cares about the z magnetic declination as its not required.
@@ -151,7 +152,7 @@ void turnRightAtZero(){
   digitalWrite(LeftMotorPin_B,0);
 
   digitalWrite(RightMotorPin_F,0);
-  digitalWrite(RightMotorPin_B,0);
+  digitalWrite(RightMotorPin_B,1);
 }
 
 void turnLeftAtZero(){
@@ -566,6 +567,7 @@ void setup() {
   digitalWrite(13,1);
   Serial.println("Tell the above output to Zubeen");
   while(digitalRead(SWITCH_PIN) != LOW);
+  delay(1000);
   // attachInterrupt(RECEIVING_PIN,changeReadingDataFlag,LOW);
 }
 
@@ -617,20 +619,34 @@ void loop(){
 
 
   // #if DEBUGGING
-   readMagneticData();
+   // readMagneticData();
    // if (readIRData()){
-     Serial.print (x,HEX);
-     Serial.print (" ");
-     Serial.println (y,HEX);
-     if(x>0){
-      if(y<5 && y>-5){
-        Serial.println("+x axis");
-      }
-     }if(y>0){
-      if(x<5 && x>-5){
-        Serial.println("+y axis");
-      }
-     }
+     // Serial.print (x);
+     // Serial.print (" ");
+     // Serial.println (y);
+     // if(x>0){
+     //  if(y<5 && y>-5){
+     //    Serial.println("+x axis");
+     //  }
+     // }if(y>0){
+     //  if(x<5 && x>-5){
+     //    Serial.println("+y axis");
+     //  }
+     // }
+
+      headingAngle=0;
+      changeOrientetion();
+      delay(5000);
+      headingAngle=90;
+      changeOrientetion();
+      delay(5000);
+      headingAngle=180;
+      changeOrientetion();
+      headingAngle=270;
+      changeOrientetion();
+      delay(5000);
+
+
    // }else{
      // Serial.println("Data was not ready");
    // }
