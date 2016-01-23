@@ -619,11 +619,12 @@ void loop(){
 
 
   // #if DEBUGGING
-   // readMagneticData();
+   readMagneticData();
    // if (readIRData()){
-     // Serial.print (x);
-     // Serial.print (" ");
-     // Serial.println (y);
+     Serial.print (x);
+     Serial.print (" ");
+     Serial.println (y);
+     delay(200);
      // if(x>0){
      //  if(y<5 && y>-5){
      //    Serial.println("+x axis");
@@ -634,17 +635,17 @@ void loop(){
      //  }
      // }
 
-      headingAngle=0;
-      changeOrientetion();
-      delay(5000);
-      headingAngle=90;
-      changeOrientetion();
-      delay(5000);
-      headingAngle=180;
-      changeOrientetion();
-      headingAngle=270;
-      changeOrientetion();
-      delay(5000);
+      // headingAngle=0;
+      // changeOrientetion();
+      // delay(5000);
+      // headingAngle=90;
+      // changeOrientetion();
+      // delay(5000);
+      // headingAngle=180;
+      // changeOrientetion();
+      // headingAngle=270;
+      // changeOrientetion();
+      // delay(5000);
 
 
    // }else{
